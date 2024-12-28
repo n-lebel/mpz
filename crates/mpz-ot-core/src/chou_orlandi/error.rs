@@ -1,7 +1,7 @@
 use crate::TransferId;
 use serde::{Deserialize, Serialize};
 
-/// A KOS abort error.
+/// A Chou-Orlandi abort error.
 #[derive(Debug, Clone, Copy, thiserror::Error, Serialize, Deserialize)]
 #[allow(missing_docs)]
 pub enum AbortError {

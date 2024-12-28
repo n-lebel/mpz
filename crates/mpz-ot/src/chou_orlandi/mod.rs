@@ -138,7 +138,7 @@ mod tests {
         )
         .await;
 
-        // Remove an element from the data.
+        // Remove an element from the array of messages.
         data.pop();
 
         let result = tokio::try_join!(
