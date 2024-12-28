@@ -54,6 +54,7 @@ mod tests {
     use mpz_common::executor::test_st_executor;
     use mpz_common::Context;
     use mpz_core::Block;
+    use mpz_ot_core::chou_orlandi::AbortError;
     use rand::Rng;
     use rand_chacha::ChaCha12Rng;
     use rand_core::SeedableRng;
@@ -123,6 +124,37 @@ mod tests {
 
         assert_eq!(output_sender.id, output_receiver.id);
         assert_eq!(output_receiver.msgs, expected);
+    }
+
+    #[rstest]
+    #[tokio::test]
+    async fn test_chou_orlandi_mismatched_lengths(mut data: Vec<[Block; 2]>, choices: Vec<bool>) {
+        let (mut sender_ctx, mut receiver_ctx) = test_st_executor(8);
+        let (mut sender, mut receiver) = setup(
+            SenderConfig::default(),
+            ReceiverConfig::default(),
+            &mut sender_ctx,
+            &mut receiver_ctx,
+        )
+        .await;
+
+        // Remove an element from the data.
+        data.pop();
+
+        let result = tokio::try_join!(
+            sender.send(&mut sender_ctx, &data).map_err(OTError::from),
+            receiver
+                .receive(&mut receiver_ctx, &choices)
+                .map_err(OTError::from)
+        );
+
+        let _expected_error = OTError::SenderError(Box::new(SenderError::AbortError(
+            AbortError::MismatchedLengths {
+                actual: data.len(),
+                expected: choices.len(),
+            },
+        )));
+        assert!(matches!(result, Err(_expected_error)));
     }
 
     #[rstest]

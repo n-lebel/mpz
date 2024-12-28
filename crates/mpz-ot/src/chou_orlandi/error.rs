@@ -1,3 +1,5 @@
+use mpz_ot_core::chou_orlandi::AbortError;
+
 use crate::OTError;
 
 /// A Chou-Orlandi sender error.
@@ -14,6 +16,8 @@ pub enum SenderError {
     CointossError(#[from] mpz_cointoss::CointossError),
     #[error("invalid configuration: {0}")]
     InvalidConfig(String),
+    #[error(transparent)]
+    AbortError(#[from] AbortError),
 }
 
 impl From<SenderError> for OTError {
@@ -45,6 +49,8 @@ pub enum ReceiverError {
     CointossError(#[from] mpz_cointoss::CointossError),
     #[error("invalid configuration: {0}")]
     InvalidConfig(String),
+    #[error(transparent)]
+    AbortError(#[from] AbortError),
 }
 
 impl From<ReceiverError> for OTError {

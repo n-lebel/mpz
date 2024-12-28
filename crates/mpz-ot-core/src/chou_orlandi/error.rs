@@ -1,4 +1,13 @@
 use crate::TransferId;
+use serde::{Deserialize, Serialize};
+
+/// A KOS abort error.
+#[derive(Debug, Clone, Copy, thiserror::Error, Serialize, Deserialize)]
+#[allow(missing_docs)]
+pub enum AbortError {
+    #[error("mismatched OT batch lengths: expected {expected}, actual {actual}")]
+    MismatchedLengths { expected: usize, actual: usize },
+}
 
 /// Errors that can occur when using the CO15 sender.
 #[derive(Debug, thiserror::Error)]

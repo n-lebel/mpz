@@ -10,7 +10,7 @@ pub use config::{
     ReceiverConfig, ReceiverConfigBuilder, ReceiverConfigBuilderError, SenderConfig,
     SenderConfigBuilder, SenderConfigBuilderError,
 };
-pub use error::{ReceiverError, SenderError, SenderVerifyError};
+pub use error::{AbortError, ReceiverError, SenderError, SenderVerifyError};
 pub use receiver::{state as receiver_state, Receiver};
 pub use sender::{state as sender_state, Sender};
 

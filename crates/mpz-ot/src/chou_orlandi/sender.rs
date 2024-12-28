@@ -6,7 +6,10 @@ use async_trait::async_trait;
 use mpz_cointoss as cointoss;
 use mpz_common::Context;
 use mpz_core::Block;
-use mpz_ot_core::chou_orlandi::{sender_state as state, Sender as SenderCore, SenderConfig};
+use mpz_ot_core::chou_orlandi::{
+    msgs::{ReceiverPayload, SenderPayload},
+    sender_state as state, AbortError, Sender as SenderCore, SenderConfig,
+};
 use rand::{thread_rng, Rng};
 use serio::{stream::IoStreamExt, SinkExt as _};
 use utils_aio::non_blocking_backend::{Backend, NonBlockingBackend};
@@ -110,7 +113,19 @@ impl<Ctx: Context> OTSender<Ctx, [Block; 2]> for Sender {
             .try_into_setup()
             .map_err(SenderError::from)?;
 
-        let receiver_payload = ctx.io_mut().expect_next().await?;
+        let receiver_payload: ReceiverPayload = ctx.io_mut().expect_next().await?;
+
+        if receiver_payload.blinded_choices.len() != input.len() {
+            let abort = AbortError::MismatchedLengths {
+                actual: receiver_payload.blinded_choices.len(),
+                expected: input.len(),
+            };
+            ctx.io_mut()
+                .send(Result::<SenderPayload, _>::Err(abort))
+                .await?;
+
+            Err(SenderError::AbortError(abort))?;
+        }
 
         let input = input.to_vec();
         let (sender, payload) = Backend::spawn(move || {
@@ -123,7 +138,9 @@ impl<Ctx: Context> OTSender<Ctx, [Block; 2]> for Sender {
 
         let id = payload.id;
 
-        ctx.io_mut().send(payload).await?;
+        ctx.io_mut()
+            .send(Result::<_, AbortError>::Ok(payload))
+            .await?;
 
         self.state = State::Setup(sender);
 

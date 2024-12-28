@@ -6,7 +6,7 @@ use mpz_common::Context;
 use mpz_core::Block;
 use mpz_ot_core::chou_orlandi::msgs::SenderPayload;
 use mpz_ot_core::chou_orlandi::{
-    receiver_state as state, Receiver as ReceiverCore, ReceiverConfig,
+    receiver_state as state, AbortError, Receiver as ReceiverCore, ReceiverConfig,
 };
 
 use enum_try_as_inner::EnumTryAsInner;
@@ -155,7 +155,11 @@ where
 
         ctx.io_mut().send(receiver_payload).await?;
 
-        let sender_payload: SenderPayload = ctx.io_mut().expect_next().await?;
+        let sender_payload = ctx
+            .io_mut()
+            .expect_next::<Result<SenderPayload, AbortError>>()
+            .await?
+            .map_err(ReceiverError::from)?;
         let id = sender_payload.id;
 
         let (receiver, msgs) = Backend::spawn(move || {
